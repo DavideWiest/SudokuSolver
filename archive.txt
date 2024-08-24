@@ -1,0 +1,65 @@
+
+// measure time
+
+let getDirectPossibilitiesMeasuringTime (solvingBoard: SolvingSudokuSquare array2d) row column (possibilities: int list) =
+    [| getRow; getColumn; getBlock |]
+    |> timeAndReturn "Array.collect" Array.collect (fun fn -> fn solvingBoard row column)
+    |> timeAndReturn "Array.map" Array.map (fun x -> 
+        match x with
+        | SolvedSquare n -> Some n
+        | UnsolvedSquare _ -> None)
+    |> timeAndReturn "Choose id" Array.choose id
+    |> timeAndReturn "Filter" (fun y -> Array.filter (fun x -> not (Array.contains x y)) (possibilities |> Array.ofList))
+    |> timeAndReturn "List.ofArray" List.ofArray
+    |> timeAndReturn "passToSquare" passToSquare
+
+// find generic "optimal" path
+
+let computeOptimal3x3Path =
+    let limit = 2
+    let rec computeOptimalPathInner (acc: (int * int) list) =
+        if acc.Head = (limit,limit) then acc else
+
+        computeOptimalPathInner (
+            match acc.Head with
+            | (x,y) when x=limit && y=limit -> acc
+            | (x,y) when y=limit -> (limit,x+1)::acc
+            | (x,y) when x=0 -> (y+1,0)::acc
+            | (x,y) -> (x-1,y+1)::acc
+        )
+
+    computeOptimalPathInner [(0,0)] |> List.rev
+
+let computeOptimalSudokuPath =
+    let blockPath = computeOptimal3x3Path
+    
+    seq {
+        for block in blockPath do
+            let blockAnchorX = (fst block) * 3
+            let blockAnchorY = (snd block) * 3
+
+            for xy in computeOptimal3x3Path do
+                let x = blockAnchorX + (fst xy)
+                let y = blockAnchorY + (snd xy)
+
+                yield (x,y)
+    }
+
+// next actually optimal square, but slows the alg down anyway
+
+let findNextOptimalSquare (solvingBoard: SolvingSudokuSquare array2d) =
+
+    let mapping = 
+        solvingBoard
+        |> Array2D.mapi (fun row column square -> (row, column, square))
+        |> Array2D.flattenToSeq
+        |> Seq.map (fun (r,c,s) -> 
+            match s with
+            | UnsolvedSquare possibilities -> (r, c, possibilities.Length)
+            | _ -> (r, c, 10)
+        )
+    
+    match mapping |> Seq.tryFind (fun (r,c,ps) -> ps = 2) with
+    | Some (r,c,_) -> (r,c)
+    | None -> 
+        mapping |> Seq.minBy (fun (_,_,ps) -> ps) |> (fun (r,c,_) -> (r,c))

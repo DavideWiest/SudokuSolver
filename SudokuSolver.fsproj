@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Domain.fs" />
+    <Compile Include="Util.fs" />
+    <Compile Include="Algorithms.fs" />
+    <Compile Include="ExactCoverAlgorithms.fs" />
+    <Compile Include="Testing.fs" />
+    <Compile Include="Loading.fs" />
+    <Compile Include="Program.fs" />
+  </ItemGroup>
+</Project>
