@@ -1,4 +1,4 @@
-module SudokuSolver.DLXAlgorithm
+module SudokuSolver.AlgorithmX
 
 open SudokuSolver.Domain
 open SudokuSolver.Util

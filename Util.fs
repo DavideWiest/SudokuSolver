@@ -57,7 +57,14 @@ module Array2D =
             Array2D.init rows cols (fun i j -> arr.[i * cols + j])
         else
             failwith "Invalid array dimensions"
-            
+    
+    let filterReturnIndex filter (arr: 'T [,]) =
+        arr
+        |> Array2D.mapi (fun i j x -> i, j, x)
+        |> flattenToSeq
+        |> Seq.filter (fun (i, j, x) -> filter x)
+        |> Seq.map (fun (i, j, x) -> i, j)
+        |> Seq.toArray
 
 module List =
     let averageByOrZero projection (list: 'a list) =

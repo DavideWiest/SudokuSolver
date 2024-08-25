@@ -2,18 +2,19 @@
 open SudokuSolver.Domain
 open SudokuSolver.Util
 open SudokuSolver.Algorithms
+open SudokuSolver.AlgorithmX
 open SudokuSolver.DLXAlgorithm
 open SudokuSolver.Testing
 open SudokuSolver.Loading
 
 let algsToCompare = [
-    //("Fake solver (calling direct possibilities inside)", fakeSolver)
     ("Direct Possibilities", solveSudokuStepwiseDirectP)
     //("Direct possibilities measuring time", solveSudokuStepwiseDirectPMeasuringTime)
     //("Direct and Indirect Possibilities chained", solveSudokuStepwiseIndirectChained relevantSquareGetters)
     ("Second order possibilities", backTrack (solveSudokuStepwiseWithSecondOrder relevantSquareGetters))
     ("Backtracking (d&i)", chainedWithBacktrack relevantSquareGetters)
     //("Algorithm X", solveWithAlgorithmX getGenericBoardConstraintMatrix)
+    ("Algorithm X using DLX", solveWithAlgorithmXUsingDLX getGenericBoardConstraintMatrix)
 ]
 
 let settings = {
@@ -42,7 +43,25 @@ let workThroughDatasets (dataSets: (string * DataSet * int) list) algsToCompare 
         stats |> List.iter printStats
     )
 
-workThroughDatasets dataSets algsToCompare settings
+//workThroughDatasets dataSets algsToCompare settings
+
+let testMatrix = 
+    Array2D.init 4 4 (fun row col -> 
+        match row, col with
+        | 0, 0 -> true
+        | 1, 1 -> true
+        | 2, 2 -> true
+        | 3, 3 -> true
+        | 0, 1 -> true
+        | 1, 2 -> true
+        | 2, 3 -> true
+        | 3, 0 -> true
+        | _ -> false
+    )
+
+contraintMatrixToDLXMatrix testMatrix |> printDLXProblem
+
+
 
 //let challengingBoardForBacktracking : UnsolvedSudokuBoard = laodFromCsvWithDotAs0 "datasets/HardestDatabase110626.txt" settings.datasetSkip settings.datasetSize false |> Seq.head |> fst
 //let (solved, runtime) = solveOnePuzzleForAnalysis challengingBoardForBacktracking (solveWithAlgorithmX getGenericBoardConstraintMatrix)

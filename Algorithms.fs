@@ -281,15 +281,3 @@ let chainedWithBacktrackOnlyDirect =  backTrack (solveSudokuStepwiseDirectP)
 // slower and uglier than the chained version
 let solveSudokuStepwiseElimination = solveSudokuStepwiseInner (getDirectPossibilitiesThroughElimination)
 
-
-let someRandomChange (solvingBoard: SolvingSudokuSquare array2d) row column (possibilities: int list) =
-    let directPossibility =
-        try 
-            getDirectPossibilities solvingBoard row column possibilities
-        with _ -> UnsolvedCell possibilities
-
-    let random = System.Random()
-    let randomIndex = random.Next(0, possibilities.Length)
-    SolvedCell possibilities.[randomIndex]
-
-let fakeSolver optimalPath board = solveSudokuStepwiseInner (applyToUnsolved someRandomChange) board
