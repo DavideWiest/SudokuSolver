@@ -134,3 +134,30 @@
 - Average Delta to Solution: **0.00%**
 - Average Delta to Solution (for successes): **0.00%**
 - Test Count: **19** (Starting at 0)
+
+---
+
+### Backtracking (d&i)
+- Success Ratio: **1.00**
+- Average Runtime: **1605614 μs**
+- Average Successful Runtime: **1605614 μs**
+- Average Board Completeness (for failures): **0.00%**
+- Average Delta to Solution: **0.00%**
+- Average Delta to Solution (for successes): **0.00%**
+- Test Count: **19** (Starting at 0)
+### Algorithm X using DLX
+- Success Ratio: **0.00**
+- Average Runtime: **135190 μs**
+- Average Successful Runtime: **0 μs**
+- Average Board Completeness (for failures): **26.84%**
+- Average Delta to Solution: **0.00%**
+- Average Delta to Solution (for successes): **0.00%**
+- Test Count: **19** (Starting at 0)
+### Algorithm X
+- Success Ratio: **1.00**
+- Average Runtime: **16482581 μs**
+- Average Successful Runtime: **16482581 μs**
+- Average Board Completeness (for failures): **0.00%**
+- Average Delta to Solution: **0.00%**
+- Average Delta to Solution (for successes): **0.00%**
+- Test Count: **19** (Starting at 0)

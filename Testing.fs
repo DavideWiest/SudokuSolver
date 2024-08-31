@@ -13,7 +13,7 @@ let findSumOfSolutionDeltas (s1: SolvedSudokuBoard) (s2: SolvedSudokuBoard) =
 let solveOnePuzzleForAnalysis problem alg =
     let input = convertToSolvingBoard problem
     let stopWatch = System.Diagnostics.Stopwatch.StartNew()
-    let result = alg input
+    let result = try alg input with _ -> input
     stopWatch.Stop()
     (convertToSolvedBoard result, stopWatch.Elapsed.TotalMicroseconds)
 

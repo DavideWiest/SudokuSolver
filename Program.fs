@@ -8,33 +8,33 @@ open SudokuSolver.Testing
 open SudokuSolver.Loading
 
 let algsToCompare = [
-    ("Direct Possibilities", solveSudokuStepwiseDirectP)
-    //("Direct possibilities measuring time", solveSudokuStepwiseDirectPMeasuringTime)
-    //("Direct and Indirect Possibilities chained", solveSudokuStepwiseIndirectChained relevantSquareGetters)
-    ("Second order possibilities", backTrack (solveSudokuStepwiseWithSecondOrder relevantSquareGetters))
+    //("Direct Possibilities", solveSudokuStepwiseDirectP)
+    ////("Direct possibilities measuring time", solveSudokuStepwiseDirectPMeasuringTime)
+    ////("Direct and Indirect Possibilities chained", solveSudokuStepwiseIndirectChained relevantSquareGetters)
+    //("Second order possibilities", backTrack (solveSudokuStepwiseWithSecondOrder relevantSquareGetters))
     ("Backtracking (d&i)", chainedWithBacktrack relevantSquareGetters)
-    //("Algorithm X", solveWithAlgorithmX getGenericBoardConstraintMatrix)
     ("Algorithm X using DLX", solveWithAlgorithmXUsingDLX getGenericBoardConstraintMatrix)
+    ("Algorithm X", solveWithAlgorithmX getGenericBoardConstraintMatrix)
 ]
 
 let settings = {
     printShortStatsIndividually = false
     printErrorIndividually = false
     printProgress = true
-    printProgressInterval = 1_000
-    datasetSize = 1_000
+    printProgressInterval = 1
+    datasetSize = 1
     datasetSkip = 0
 }
 
 let dataSets = [
-    ("Easy Kaggle Datatset (1M)", loadFromKaggleDataSet "../sudoku.csv" settings.datasetSkip 900_000, 900_000)
-    ("Hardest", laodFromCsvWithDotAs0 "datasets/HardestDatabase110626.txt" 0 375 false, 375)
+    //("Easy Kaggle Datatset (1M)", loadFromKaggleDataSet "../sudoku.csv" settings.datasetSkip 999_999, 999_999)
+    ("Hardest", laodFromCsvWithDotAs0 "datasets/HardestDatabase110626.txt" 0 20 false, 20) // 375
 ]
 
 let workThroughDatasets (dataSets: (string * DataSet * int) list) algsToCompare settings = 
     dataSets 
     |> List.map (fun (name: string, dataSet: DataSet, size) -> 
-        let settings' = { settings with datasetSize = size; printProgressInterval = size / 100}
+        let settings' = { settings with datasetSize = size; printProgressInterval = max (size / 100) 1}
         let stats = dataSet |> (compareSolvingAlgs settings' algsToCompare)
         (name, stats)
     )
@@ -43,25 +43,12 @@ let workThroughDatasets (dataSets: (string * DataSet * int) list) algsToCompare 
         stats |> List.iter printStats
     )
 
-//workThroughDatasets dataSets algsToCompare settings
+workThroughDatasets dataSets algsToCompare settings
 
-let testMatrix = 
-    Array2D.init 4 4 (fun row col -> 
-        match row, col with
-        | 0, 0 -> true
-        | 1, 1 -> true
-        | 2, 2 -> true
-        | 3, 3 -> true
-        | 0, 1 -> true
-        | 1, 2 -> true
-        | 2, 3 -> true
-        | 3, 0 -> true
-        | _ -> false
-    )
+//let solved = selectRows [] (testMatrix2 |> contraintMatrixToDLXMatrix)
+//printfn "%A" solved
 
-contraintMatrixToDLXMatrix testMatrix |> printDLXProblem
-
-
+// testing a challenging board
 
 //let challengingBoardForBacktracking : UnsolvedSudokuBoard = laodFromCsvWithDotAs0 "datasets/HardestDatabase110626.txt" settings.datasetSkip settings.datasetSize false |> Seq.head |> fst
 //let (solved, runtime) = solveOnePuzzleForAnalysis challengingBoardForBacktracking (solveWithAlgorithmX getGenericBoardConstraintMatrix)

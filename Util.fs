@@ -84,6 +84,10 @@ let writeToFile (filename: string) (content: string) =
 let appendToFile (filename: string) (content: string) =
     System.IO.File.AppendAllText(filename, content)
 
+let modPosRepr i d = 
+    let rem = i % d
+    if rem < 0 then rem + d else rem
+
 // ---
 // SUDOKU BOARD UTILS
 // ---
@@ -118,6 +122,16 @@ let countSolvedSquares (board: SolvingSudokuBoard) =
     )
     |> Array2D.flattenToSeq
     |> Seq.sum
+
+let booleanMatrixVisualization (arr2D: bool array2d) =
+    arr2D
+    |> Array2D.map (fun value ->
+        if value then "X" else " "
+    )
+    |> Array2D.flattenToArrayOfArray
+    |> Array.map (String.concat " | ")
+    |> String.concat "\n"
+    |> printfn "Test Matrix:\n%s"
 
 // ---
 // CONVERSION

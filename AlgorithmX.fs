@@ -55,6 +55,21 @@ let getColumnSumOfTrues (matrix: bool array2d) =
 
 let getSumOfTrues = getColumnSumOfTrues >> Array.sum
 
+let testConstraintMatrix = 
+    Array2D.init 4 3 (fun row col -> 
+        match row, col with
+        | 0, 0 | 1, 1 | 2, 2 | 3, 3 | 0, 1 | 1, 2 | 2, 3 | 3, 0 | 3, 1 -> true
+        | _ -> false
+    )
+
+let testConstraintMatrix2 = 
+    Array2D.init 3 6 (fun row col -> 
+        match row, col with
+        | 0,0 | 0,3 | 1,1 | 1,2 | 1,4 | 1,5 | 2,3 | 2,5 -> true
+        | _ -> false
+    )
+
+
 // ---
 // Conversion
 // ---
