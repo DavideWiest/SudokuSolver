@@ -46,6 +46,7 @@ type AnalysisSettings = {
     printShortStatsIndividually: bool
     printErrorIndividually: bool
     printProgress: bool
+    rethrowExceptions: bool
     printProgressInterval: int
 
     datasetSize: int

@@ -10,15 +10,15 @@ let findSumOfSolutionDeltas (s1: SolvedSudokuBoard) (s2: SolvedSudokuBoard) =
     |> Array.mapi (fun i x -> if x = s2Arr.[i] then 0 else 1)
     |> Array.sum
 
-let solveOnePuzzleForAnalysis problem alg =
+let solveOnePuzzleForAnalysis settings problem alg =
     let input = convertToSolvingBoard problem
     let stopWatch = System.Diagnostics.Stopwatch.StartNew()
-    let result = try alg input with _ -> input
+    let result = try alg input with exn -> if settings.rethrowExceptions then reraise() else input
     stopWatch.Stop()
     (convertToSolvedBoard result, stopWatch.Elapsed.TotalMicroseconds)
 
 let analyzeSolvingAlg settings index problem solution (alg: SolvingSudokuBoard -> SolvingSudokuBoard) : RuntimeStats =
-    let (result, runtime) = solveOnePuzzleForAnalysis problem alg
+    let (result, runtime) = solveOnePuzzleForAnalysis settings problem alg
 
     let success = 
         match result with
@@ -50,7 +50,7 @@ let analyzeSolvingAlg settings index problem solution (alg: SolvingSudokuBoard -
     }
 
 let combineTestStats settings name tests : RuntimeStatsAgglomeration =   
-    let testList = tests |> List.ofSeq |> List.tail // the first call seems inaccurate
+    let testList = if tests |> Seq.length = 1 then tests else tests |> List.ofSeq |> List.tail // the first call seems inaccurate
     let testCount = testList.Length
     let averageSuccess = testList |> List.averageByOrZero (fun stats -> if stats.success then 1.0 else 0.0)
     let averageRuntime = testList |> List.map (fun stats -> stats.runtimeMicroS) |> List.averageOrZero
@@ -74,10 +74,10 @@ let combineTestStats settings name tests : RuntimeStatsAgglomeration =
 let compareSolvingAlgs (settings: AnalysisSettings) (solveFns: solvingAlg list) (boardsDataset: (SudokuCell array2d * SolvedSudokuBoard option) seq) = 
     if settings.printShortStatsIndividually then printfn "T (ms),Success,Delta"
 
-    if boardsDataset |> Seq.length < 1 then failwith "Dataset too small. Must be at least 2."
+    if boardsDataset |> Seq.length < 1 then failwith "Dataset too small. Must be at least 1."
 
     solveFns
-    |> List.map ( fun (name, solveFn) -> 
+    |> List.map (fun (name, solveFn) -> 
         printfn "Testing %s" name
 
         boardsDataset 

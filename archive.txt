@@ -63,3 +63,13 @@ let findNextOptimalSquare (solvingBoard: SolvingSudokuSquare array2d) =
     | Some (r,c,_) -> (r,c)
     | None -> 
         mapping |> Seq.minBy (fun (_,_,ps) -> ps) |> (fun (r,c,_) -> (r,c))
+
+ let rowIndices = getAvailableRowsForColumn problem colI |> List.map (fun node -> node.row) |> List.map (fun rowI -> problem.nodeMap[(rowI, colI)].row) |> List.map (fun rowI -> reduceProblemDLX problem problem.nodeMap[(rowI, colI)])
+
+    rowIndices
+    |> List.tryPick (fun rowI -> 
+        printfn "Selected Col: %i, rows: %A" colI rowIndices
+        
+        let rowNodeChosen = problem.nodeMap[(rowI, colI)]
+        rowNodeChosen |> (reduceProblemDLX problem >> selectRows >> Option.bind (fun newAcc -> Some (rowNodeChosen.row::newAcc)))
+    )

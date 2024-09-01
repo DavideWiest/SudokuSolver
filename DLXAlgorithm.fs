@@ -49,9 +49,8 @@ let accessCircularly2D ij  (mat: 'a array array) =
     mat[modPosRepr i d1][modPosRepr j d2]
 
 let printDLXProblem (problem: DLXProblem) =
-    let columns = problem.columns |> Map.toArray |> Array.map snd
-    let columnStartIndices = columns |> Array.map (fun col -> col.rowStartIndex)
-    let columnSizes = columns |> Array.map (fun col -> col.size)
+    let columns = problem.columns |> Map.toArray
+    let columnInfo = columns |> Array.map (fun (i, col) -> i, col.size, col.rowStartIndex) |> Array.map (fun (i, size, rowStartIndex) -> sprintf "%d, s: %d, startI: %d" i size rowStartIndex)
 
     let nodeKeys = getKeys problem.nodeMap
 
@@ -60,13 +59,22 @@ let printDLXProblem (problem: DLXProblem) =
     let nodeValuesStr = nodeValues |> Array.map (fun node -> sprintf "at (%d,%d) l: (%d,%d), r: (%d,%d), u: (%d,%d), d: (%d,%d)" node.row node.col node.row node.left node.row node.right node.up node.col node.down node.col)
 
     printfn "Node values: \n%s" (nodeValuesStr |> String.concat "\n")
-    printfn "Column start indices: \n%A" columnStartIndices
-    printfn "Column sizes: \n%A" columnSizes
+    printfn "columnInfo: \n%s" (columnInfo |> String.concat "\n")
 
 let nestedArrayToIndexDictArray index =
         index
         |> Array.map (Array.mapi (fun i x -> x, i))
         |> Array.map Map.ofArray
+
+let testColumnSizesMatch problem =
+    let nodeKeys = getKeys problem.nodeMap
+    problem.columns
+    |> Map.toArray
+    |> Array.map (fun (colI, col) -> 
+        let nodes = nodeKeys |> Array.filter (fun (_, colI') -> colI' = colI)
+        col.size, nodes.Length
+    )
+    |> Array.forall (fun (size1, size2) -> size1 = size2)
 
 // ---
 // Conversion
@@ -153,7 +161,6 @@ let accumulateNodesOfRing problem iterationFn startNode =
     let rec accumulateNodesOfRingInner problem iterationFn startNode acc currentNode =
         //printfn "Current node: %A" currentNode
         let nextNodeCoords, currentNodeAcc = iterationFn currentNode
-        //printfn "Next node coords: %A" nextNodeCoords
         let acc' = currentNodeAcc::acc
 
         let nextNode = problem.nodeMap[nextNodeCoords]
@@ -168,17 +175,13 @@ let getAvailableRowsForColumn problem (columnI: int) : DLXNode list =
     if maybeStartNode.IsNone then [] else
     accumulateNodesOfRing problem iterateOverColumnAccumulatingNodes maybeStartNode.Value
 
-let removeColumn (problem: DLXProblem) (colI: int) =
-    let mutable problem = problem
-
-    //printfn "Removing column %i" colI
+let removeColumn (problemIn: DLXProblem) (colI: int) =
+    let mutable problem = problemIn
 
     let coordsStartNode = (problem.columns[colI].rowStartIndex, colI)
     let startNode = problem.nodeMap[coordsStartNode]
-    //printfn "Start node: %A" startNode
 
     let rowIndices = accumulateNodesOfRing problem iterateOverColumn startNode
-    //printfn "Row indices: %A" rowIndices
 
     rowIndices
     |> List.iter (fun rowI -> 
@@ -193,9 +196,9 @@ let removeColumn (problem: DLXProblem) (colI: int) =
 
     problem
 
-let removeRow (problem: DLXProblem) (rowI: int) =
-    let mutable problem = problem
-    //printfn "Removing row %i" rowI
+let removeRow (problemIn: DLXProblem) (rowI: int) =
+    let mutable problem = problemIn
+
     let maybeStartNode = getKeys problem.nodeMap |> Array.tryPick (fun (row, col) -> if row = rowI then Some problem.nodeMap[(row, col)] else None)
     // no nodes in row - nothing to remove
     if maybeStartNode.IsNone then problem else
@@ -216,11 +219,15 @@ let removeRow (problem: DLXProblem) (rowI: int) =
 
     problem
     
-let reduceProblemDLX (problem: DLXProblem) (rowNode: DLXNode) : DLXProblem = 
-    let mutable problem = problem
+let reduceProblemDLX (problemIn: DLXProblem) (rowNode: DLXNode) : DLXProblem = 
+    let mutable problem = problemIn
 
-    //printfn "BEFORE REDUCTION"
-    //printDLXProblem problem
+    printfn "-----------------"
+    printfn "BEFORE REDUCTION"
+    printDLXProblem problem
+    printfn "columns match %b" (testColumnSizesMatch problem)
+    printfn "rowNode: %A" rowNode
+    printfn "col size: %i" (problem.columns[rowNode.col].size)
 
     let columnsOfSelectedRow = accumulateNodesOfRing problem iterateOverRow rowNode
 
@@ -230,39 +237,41 @@ let reduceProblemDLX (problem: DLXProblem) (rowNode: DLXNode) : DLXProblem =
         |> List.concat
         |> List.distinctBy (fun node -> node.row)
     
+    printfn "Removing columns %A" columnsOfSelectedRow
+    printfn "Removing rows %A" (rowsOfSelectedColumns |> List.map (fun node -> node.row))
+
     columnsOfSelectedRow |> List.iter (fun colI -> problem <- removeColumn problem colI)
     rowsOfSelectedColumns |> List.iter (fun rowNode -> problem <- removeRow problem rowNode.row)
 
-    //printfn "AFTER REDUCTION"
-    //printDLXProblem problem
-
     problem
 
-let rec selectRows (acc: int list) (problem: DLXProblem) : int list option =
-    let mutable problem = problem
-
+let rec selectRows (problem: DLXProblem) : int list option =
     // no constraints exists to be satisfied
-    if problem.columns.Count = 0 then Some acc else
+    if problem.columns.Count = 0 then Some [] else
+
+    printfn "columns match: %b" (testColumnSizesMatch problem)
     
-    let rowIndices = 
+    let (colI, col) = 
         problem.columns 
         |> Map.toArray 
         |> Array.minBy (fun (colI, node) -> node.size) 
-        |> fst 
-        |> getAvailableRowsForColumn problem
+    
+    if col.size = 0 then None else
 
-    rowIndices
-    |> List.tryPick (fun rowNodeChosen -> 
-        rowNodeChosen |> (reduceProblemDLX problem >> selectRows acc >> Option.bind (fun newAcc -> Some (rowNodeChosen.row::newAcc)))
+    let nextProblems = 
+        getAvailableRowsForColumn problem colI 
+        |> List.map (fun node -> node.row) 
+        // error here
+        |> List.map (fun rowI -> rowI, reduceProblemDLX problem problem.nodeMap[(rowI, colI)])
+
+    nextProblems
+    |> List.tryPick (fun (rowI, newProblem) ->         
+        
+        newProblem |> (selectRows >> Option.bind (fun newAcc -> Some (rowI::newAcc)))
     )
 
 let solveWithAlgorithmXUsingDLX (genericConstraintMatrix: bool array2d) (board: SolvingSudokuBoard) =
-    
-    let maybeSolution = board |> applyBoardToConstraintMatrix genericConstraintMatrix |> contraintMatrixToDLXMatrix |> selectRows []
-    // for later
-    // let maybeSolution = board |> applyBoardToDLXMatrix genericDLXMatrix |> solve []
-
-    match maybeSolution with
+    match board |> applyBoardToConstraintMatrix genericConstraintMatrix |> contraintMatrixToDLXMatrix |> selectRows with
     | Some solution -> 
         List.fold (fun board matRowI -> applyRowToBoard matRowI board) board solution
     | None -> failwith "No solution"

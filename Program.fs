@@ -11,24 +11,26 @@ let algsToCompare = [
     //("Direct Possibilities", solveSudokuStepwiseDirectP)
     ////("Direct possibilities measuring time", solveSudokuStepwiseDirectPMeasuringTime)
     ////("Direct and Indirect Possibilities chained", solveSudokuStepwiseIndirectChained relevantSquareGetters)
-    //("Second order possibilities", backTrack (solveSudokuStepwiseWithSecondOrder relevantSquareGetters))
-    ("Backtracking (d&i)", chainedWithBacktrack relevantSquareGetters)
+    //("Backtracking with second order possibilities", backTrack (solveSudokuStepwiseWithSecondOrder relevantSquareGetters))
+    
+    //("Backtracking (d&i)", chainedWithBacktrack relevantSquareGetters)
+    //("Algorithm X", solveWithAlgorithmX getGenericBoardConstraintMatrix)
     ("Algorithm X using DLX", solveWithAlgorithmXUsingDLX getGenericBoardConstraintMatrix)
-    ("Algorithm X", solveWithAlgorithmX getGenericBoardConstraintMatrix)
 ]
 
 let settings = {
     printShortStatsIndividually = false
     printErrorIndividually = false
     printProgress = true
+    rethrowExceptions = true
     printProgressInterval = 1
-    datasetSize = 1
+    datasetSize = 0 // will be overwritten by the dataset list
     datasetSkip = 0
 }
 
-let dataSets = [
-    //("Easy Kaggle Datatset (1M)", loadFromKaggleDataSet "../sudoku.csv" settings.datasetSkip 999_999, 999_999)
-    ("Hardest", laodFromCsvWithDotAs0 "datasets/HardestDatabase110626.txt" 0 20 false, 20) // 375
+let dataSets: (string * (UnsolvedSudokuBoard * SolvedSudokuBoard option) seq * int) list = [
+    //("Easy Kaggle Datatset (1M)", loadFromKaggleDataSet "../sudoku.csv" settings.datasetSkip 100, 100)
+    ("Hardest", laodFromCsvWithDotAs0 "datasets/HardestDatabase110626.txt" settings.datasetSkip 1 false, 1) // 375
 ]
 
 let workThroughDatasets (dataSets: (string * DataSet * int) list) algsToCompare settings = 
@@ -45,7 +47,7 @@ let workThroughDatasets (dataSets: (string * DataSet * int) list) algsToCompare 
 
 workThroughDatasets dataSets algsToCompare settings
 
-//let solved = selectRows [] (testMatrix2 |> contraintMatrixToDLXMatrix)
+//let solved = selectRows (testConstraintMatrix3 |> contraintMatrixToDLXMatrix)
 //printfn "%A" solved
 
 // testing a challenging board

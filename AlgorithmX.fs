@@ -69,6 +69,13 @@ let testConstraintMatrix2 =
         | _ -> false
     )
 
+let testConstraintMatrix3 =
+    Array2D.init 8 8 (fun row col -> 
+        match row, col with
+        0,0 | 0,2 | 0,4 | 0,6 | 1,1 | 2,2 | 2,6 | 3,1 | 3,3 | 3,5 | 3,6 | 4,0 | 4,3 | 4,4 | 4,6 | 5,5 | 6,2 | 6,4 | 6,5 | 7,3 | 7,7 -> true
+        | _ -> false
+    )
+
 
 // ---
 // Conversion
@@ -159,19 +166,23 @@ let applyRowToBoard (matRowI: int) (board: SolvingSudokuBoard) =
     )
 
 let solveWithAlgorithmX (genericConstraintMatrix: bool array2d) (board: SolvingSudokuBoard) =
-    let rec solve (acc: int list) (problem: bool[,]) : int list option =
+    let rec solve (problem: bool[,]) : int list option =
         // no constraints exists to be satisfied
-        if problem.GetLength 0 = 0 || problem.GetLength 1 = 0 then Some acc else
+        if problem.GetLength 0 = 0 || problem.GetLength 1 = 0 then Some [] else
 
         let colWithFewestOnes = problem |> getColumnSumOfTrues |> Array.minIndexBy id
-        let rowIndices = problem[*, colWithFewestOnes] |> Array.filterReturnIndex id // |> Array.sortBy (fun x -> problem.[x, *] |> Array.sumBy boolToInt)
+        printfn "Selected column: %i" colWithFewestOnes
         
+        let rowIndices = problem[*, colWithFewestOnes] |> Array.filterReturnIndex id // |> Array.sortBy (fun x -> problem.[x, *] |> Array.sumBy boolToInt)
+        printfn "Row indices for column: %A" rowIndices
+
         rowIndices
         |> Array.tryPick (fun rowChosenI -> 
-            rowChosenI |> (reduceProblem problem >> solve acc >> Option.bind (fun newAcc -> Some (rowChosenI::newAcc)))
+            rowChosenI |> (reduceProblem problem >> solve >> Option.bind (fun newAcc -> Some (rowChosenI::newAcc)))
         )
     
-    match board |> applyBoardToConstraintMatrix genericConstraintMatrix |> solve [] with
+    match board |> applyBoardToConstraintMatrix genericConstraintMatrix |> solve with
     | Some solution -> 
+        printfn "Solution found: %A" solution
         List.fold (fun board matRowI -> applyRowToBoard matRowI board) board solution
     | None -> failwith "No solution"
